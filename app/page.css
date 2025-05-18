@@ -1,0 +1,73 @@
+/* Update background colors to use the specific pink/rose color */
+
+/* Additional styles for the editor */
+.editor-container {
+  background: #e783bd;
+  color: black;
+}
+
+.canvas-container {
+  background: #e783bd;
+}
+
+.layer-panel {
+  background: #e783bd;
+  border-left: 2px solid gold;
+}
+
+.export-button {
+  background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c) !important;
+  color: black !important;
+  font-weight: bold !important;
+  border: 2px solid black !important;
+}
+
+.border-gold {
+  border-color: gold !important;
+}
+
+/* Override for all buttons */
+button {
+  background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c) !important;
+  color: black !important;
+  font-weight: bold !important;
+  border: 1px solid black !important;
+}
+
+button:hover {
+  background: linear-gradient(to right, #d4860a, #fcf6ba, #bf953f, #fbf5b7, #b38728) !important;
+}
+
+/* Add button states */
+button:active {
+  background: linear-gradient(to right, #aa771c, #b38728, #bf953f, #fcf6ba, #fbf5b7) !important;
+}
+
+button:disabled {
+  background: linear-gradient(to right, #aa771c, #b38728, #bf953f, #fcf6ba, #fbf5b7) !important;
+  opacity: 0.6 !important;
+}
+
+/* Override for all inputs */
+input,
+textarea,
+select {
+  background-color: white !important;
+  color: black !important;
+  border: 2px solid gold !important;
+}
+
+/* Override for all text */
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+span,
+div,
+label {
+  color: black !important;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.5);
+}

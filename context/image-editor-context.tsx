@@ -5,6 +5,8 @@ import { createContext, useContext, type ReactNode } from "react"
 export type BrushSettings = {
   color: string
   size: number
+  opacity: number
+  style: "round" | "square" | "calligraphy"
 }
 
 export type TextOverlay = {
@@ -42,7 +44,7 @@ export type CropSelection = {
 export type Layer = {
   id: string
   name: string
-  type: "image" | "text" | "shape" | "brush" | "sticker" | "overlay"
+  type: "image" | "text" | "shape" | "brush" | "sticker" | "overlay" | "frame"
   visible: boolean
   data: any
   position: { x: number; y: number }
@@ -84,6 +86,15 @@ export type FocusEffect = {
   y: number
 }
 
+export type Frame = {
+  style: string
+  borderWidth: number
+  borderColor: string
+  borderRadius: number
+  padding: number
+  shadowIntensity: number
+}
+
 type ImageEditorContextType = {
   image: string | null
   setImage: (image: string | null) => void
@@ -117,6 +128,8 @@ type ImageEditorContextType = {
   removeOverlay?: (id: string) => void
   updateOverlay?: (id: string, updates: Partial<Overlay>) => void
   applyFocusEffect?: (effect: FocusEffect) => void
+  applyFrame?: (frame: Frame) => void
+  currentFrame?: Frame | null
 }
 
 const ImageEditorContext = createContext<ImageEditorContextType | null>(null)

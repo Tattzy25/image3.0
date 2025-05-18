@@ -6,7 +6,6 @@ import { useState, useEffect } from "react"
 import { Search, ImageIcon, Download, RefreshCw } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/hooks/use-toast"
 import { useImageEditorContext } from "@/context/image-editor-context"
 
@@ -165,26 +164,16 @@ export default function StockImagesPanel() {
         </div>
       ) : (
         <>
-          <ScrollArea className="h-[400px]">
-            <div className="grid grid-cols-2 gap-2">
-              {images.map((image) => (
-                <div
-                  key={image.id}
-                  className="relative group overflow-hidden rounded-md cursor-pointer"
-                  onClick={() => handleImageSelect(image)}
-                >
-                  <img
-                    src={image.src.medium || "/placeholder.svg"}
-                    alt={image.alt}
-                    className="w-full h-auto object-cover aspect-square group-hover:scale-105 transition-transform duration-200"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
-                    <Download className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                  </div>
+          <div className="mobile-image-grid">
+            {images.map((image) => (
+              <div key={image.id} className="mobile-image-item" onClick={() => handleImageSelect(image)}>
+                <img src={image.src.medium || "/placeholder.svg"} alt={image.alt} loading="lazy" />
+                <div className="mobile-image-overlay">
+                  <Download className="h-5 w-5" />
                 </div>
-              ))}
-            </div>
-          </ScrollArea>
+              </div>
+            ))}
+          </div>
 
           {page < totalPages && (
             <Button variant="outline" className="w-full" onClick={handleLoadMore} disabled={loading}>

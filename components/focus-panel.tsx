@@ -72,16 +72,19 @@ export default function FocusPanel() {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2">Focus Shape</label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="flex justify-center gap-3">
               {focusShapes.map((shape) => (
                 <Button
                   key={shape.id}
                   variant={focusShape === shape.id ? "default" : "outline"}
-                  className="flex flex-col items-center py-3"
+                  className="flex flex-col items-center justify-center py-2 px-3 h-20 w-20"
                   onClick={() => setFocusShape(shape.id)}
                 >
-                  <shape.icon className="h-6 w-6 mb-1" />
-                  <span className="text-xs">{shape.name}</span>
+                  <shape.icon className="h-8 w-8 mb-1" />
+                  <span className="text-xs font-medium text-white truncate w-full text-center">{shape.name}</span>
+                  {focusShape === shape.id && (
+                    <div className="absolute inset-0 border-2 border-orange-500 rounded-md pointer-events-none" />
+                  )}
                 </Button>
               ))}
             </div>
@@ -90,7 +93,7 @@ export default function FocusPanel() {
           <div>
             <label className="block text-sm font-medium mb-2">Effect Type</label>
             <Select value={focusEffect} onValueChange={setFocusEffect}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                 <SelectValue placeholder="Effect" />
               </SelectTrigger>
               <SelectContent>
@@ -112,7 +115,7 @@ export default function FocusPanel() {
               step={1}
               onValueChange={(value) => handleSettingChange("intensity", value[0])}
             />
-            <div className="text-right text-xs text-zinc-400">{focusSettings.intensity}%</div>
+            <div className="text-right text-xs text-white font-medium">{focusSettings.intensity}%</div>
           </div>
 
           <div className="space-y-2">
@@ -124,7 +127,7 @@ export default function FocusPanel() {
               step={1}
               onValueChange={(value) => handleSettingChange("feather", value[0])}
             />
-            <div className="text-right text-xs text-zinc-400">{focusSettings.feather}%</div>
+            <div className="text-right text-xs text-white font-medium">{focusSettings.feather}%</div>
           </div>
 
           <div className="space-y-2">
@@ -136,7 +139,7 @@ export default function FocusPanel() {
               step={1}
               onValueChange={(value) => handleSettingChange("size", value[0])}
             />
-            <div className="text-right text-xs text-zinc-400">{focusSettings.size}%</div>
+            <div className="text-right text-xs text-white font-medium">{focusSettings.size}%</div>
           </div>
 
           <div className="pt-4 border-t border-zinc-700">
@@ -168,7 +171,7 @@ export default function FocusPanel() {
               step={1}
               onValueChange={(value) => handleSettingChange("intensity", value[0])}
             />
-            <div className="text-right text-xs text-zinc-400">{focusSettings.intensity}%</div>
+            <div className="text-right text-xs text-white font-medium">{focusSettings.intensity}%</div>
           </div>
 
           <div className="space-y-2">
@@ -180,7 +183,7 @@ export default function FocusPanel() {
               step={1}
               onValueChange={(value) => handleSettingChange("size", value[0])}
             />
-            <div className="text-right text-xs text-zinc-400">{focusSettings.size}%</div>
+            <div className="text-right text-xs text-white font-medium">{focusSettings.size}%</div>
           </div>
 
           <div className="space-y-2">
@@ -192,7 +195,7 @@ export default function FocusPanel() {
               step={1}
               onValueChange={(value) => handleSettingChange("y", value[0])}
             />
-            <div className="text-right text-xs text-zinc-400">{focusSettings.y}%</div>
+            <div className="text-right text-xs text-white font-medium">{focusSettings.y}%</div>
           </div>
 
           <div className="pt-4 border-t border-zinc-700">

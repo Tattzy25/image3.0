@@ -1,11 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, Smile, Star, ImageIcon, Plus } from "lucide-react"
+import { Search, Smile, Star, ImageIcon, Info } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { useToast } from "@/hooks/use-toast"
 import { useImageEditorContext } from "@/context/image-editor-context"
 
 // Sample sticker categories and items
@@ -35,66 +36,6 @@ const stickerCategories = [
       "😚",
       "🙂",
       "🤗",
-      "🤩",
-      "🤔",
-      "🤨",
-      "😐",
-      "😑",
-      "😶",
-      "🙄",
-      "😏",
-      "😣",
-      "😥",
-      "😮",
-      "🤐",
-      "😯",
-      "😪",
-      "😫",
-      "🥱",
-      "😴",
-      "😌",
-      "😛",
-      "😜",
-      "😝",
-      "🤤",
-      "😒",
-      "😓",
-      "😔",
-      "😕",
-      "🙃",
-      "🤑",
-      "😲",
-      "☹️",
-      "🙁",
-      "😖",
-      "😞",
-      "😟",
-      "😤",
-      "😢",
-      "😭",
-      "😦",
-      "😧",
-      "😨",
-      "😩",
-      "🤯",
-      "😬",
-      "😰",
-      "😱",
-      "🥵",
-      "🥶",
-      "😳",
-      "🤪",
-      "😵",
-      "🥴",
-      "😠",
-      "😡",
-      "🤬",
-      "😷",
-      "🤒",
-      "🤕",
-      "🤢",
-      "🤮",
-      "🤧",
     ],
   },
   {
@@ -122,66 +63,6 @@ const stickerCategories = [
       "💔",
       "❣️",
       "💕",
-      "💞",
-      "💓",
-      "💗",
-      "💖",
-      "💘",
-      "💝",
-      "💟",
-      "☮️",
-      "✝️",
-      "☪️",
-      "🕉️",
-      "☸️",
-      "✡️",
-      "🔯",
-      "🕎",
-      "☯️",
-      "☦️",
-      "🛐",
-      "⛎",
-      "♈",
-      "♉",
-      "♊",
-      "♋",
-      "♌",
-      "♍",
-      "♎",
-      "♏",
-      "♐",
-      "♑",
-      "♒",
-      "♓",
-      "🆔",
-      "⚛️",
-      "🉑",
-      "☢️",
-      "☣️",
-      "📴",
-      "📳",
-      "🈶",
-      "🈚",
-      "🈸",
-      "🈺",
-      "🈷️",
-      "✴️",
-      "🆚",
-      "💮",
-      "🉐",
-      "㊙️",
-      "㊗️",
-      "🈴",
-      "🈵",
-      "🈹",
-      "🈲",
-      "🅰️",
-      "🅱️",
-      "🆎",
-      "🆑",
-      "🅾️",
-      "🆘",
-      "❌",
     ],
   },
   {
@@ -209,66 +90,6 @@ const stickerCategories = [
       "🙊",
       "🐒",
       "🐔",
-      "🐧",
-      "🐦",
-      "🐤",
-      "🐣",
-      "🐥",
-      "🦆",
-      "🦅",
-      "🦉",
-      "🦇",
-      "🐺",
-      "🐗",
-      "🐴",
-      "🦄",
-      "🐝",
-      "🐛",
-      "🦋",
-      "🐌",
-      "🐞",
-      "🐜",
-      "🦟",
-      "🦗",
-      "🕷️",
-      "🕸️",
-      "🦂",
-      "🐢",
-      "🐍",
-      "🦎",
-      "🦖",
-      "🦕",
-      "🐙",
-      "🦑",
-      "🦐",
-      "🦞",
-      "🦀",
-      "🐡",
-      "🐠",
-      "🐟",
-      "🐬",
-      "🐳",
-      "🐋",
-      "🦈",
-      "🐊",
-      "🐅",
-      "🐆",
-      "🦓",
-      "🦍",
-      "🦧",
-      "🐘",
-      "🦛",
-      "🦏",
-      "🐪",
-      "🐫",
-      "🦒",
-      "🦘",
-      "🐃",
-      "🐂",
-      "🐄",
-      "🐎",
-      "🐖",
-      "🐏",
     ],
   },
   {
@@ -296,73 +117,7 @@ const stickerCategories = [
       "🍆",
       "🥑",
       "🥦",
-      "🥬",
-      "🥒",
-      "🌶️",
-      "🌽",
-      "🥕",
-      "🧄",
-      "🧅",
-      "🥔",
-      "🍠",
-      "🥐",
-      "🥯",
-      "🍞",
-      "🥖",
-      "🥨",
-      "🧀",
-      "🥚",
-      "🍳",
-      "🧈",
-      "🥞",
-      "🧇",
-      "🥓",
-      "🥩",
-      "🍗",
-      "🍖",
-      "🦴",
-      "🌭",
-      "🍔",
-      "🍟",
-      "🍕",
-      "🥪",
-      "🥙",
-      "🧆",
-      "🌮",
-      "🌯",
-      "🥗",
-      "🥘",
-      "🥫",
-      "🍝",
-      "🍜",
-      "🍲",
-      "🍛",
-      "🍣",
-      "🍱",
-      "🥟",
-      "🦪",
-      "🍤",
-      "🍙",
-      "🍚",
-      "🍘",
-      "🍥",
-      "🥠",
-      "🥮",
-      "🍢",
-      "🍡",
-      "🍧",
-      "🍨",
-      "🍦",
-      "🥧",
-      "🧁",
-      "🍰",
     ],
-  },
-  {
-    id: "custom",
-    name: "Custom",
-    icon: Plus,
-    stickers: [],
   },
 ]
 
@@ -371,13 +126,13 @@ export default function StickerPanel() {
   const [searchQuery, setSearchQuery] = useState("")
   const [filteredStickers, setFilteredStickers] = useState<string[]>([])
   const { addSticker } = useImageEditorContext()
+  const { toast } = useToast()
 
   const currentCategory = stickerCategories.find((cat) => cat.id === activeCategory)
 
   useEffect(() => {
     if (currentCategory) {
       if (searchQuery) {
-        // This is a simplified search - in a real app, you'd have better metadata
         setFilteredStickers(
           currentCategory.stickers.filter((sticker) => sticker.toLowerCase().includes(searchQuery.toLowerCase())),
         )
@@ -388,39 +143,57 @@ export default function StickerPanel() {
   }, [currentCategory, searchQuery])
 
   const handleStickerClick = (sticker: string) => {
-    // In a real implementation, this would add the sticker to the canvas
-    console.log("Adding sticker:", sticker)
+    try {
+      if (typeof addSticker === "function") {
+        addSticker({
+          content: sticker,
+          x: 200, // Center of canvas
+          y: 200,
+          scale: 2, // Make emojis larger by default
+          rotation: 0,
+        })
 
-    // Mock implementation of addSticker
-    if (typeof addSticker === "function") {
-      addSticker({
-        id: `sticker-${Date.now()}`,
-        content: sticker,
-        x: 200,
-        y: 200,
-        scale: 1,
-        rotation: 0,
+        toast({
+          title: "Sticker added",
+          description: "Click and drag to position the sticker on your image",
+        })
+      } else {
+        throw new Error("Sticker functionality not available")
+      }
+    } catch (error) {
+      console.error("Error adding sticker:", error)
+      toast({
+        title: "Error adding sticker",
+        description: "There was a problem adding the sticker. Please try again.",
       })
     }
   }
 
   return (
     <div className="space-y-4">
+      <div className="bg-zinc-800 rounded-lg p-4 mb-4">
+        <div className="flex items-center gap-2 text-amber-400 bg-amber-950/30 p-3 rounded-md mb-4">
+          <Info className="h-5 w-5 flex-shrink-0" />
+          <p className="text-sm">Click on any emoji to add it to your image. You can then position and resize it.</p>
+        </div>
+      </div>
+
       <div className="relative">
         <Search className="absolute left-2 top-2.5 h-4 w-4 text-zinc-500" />
         <Input
           placeholder="Search stickers..."
-          className="pl-8"
+          className="pl-8 text-white"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
 
       <Tabs defaultValue={activeCategory} onValueChange={setActiveCategory}>
-        <TabsList className="grid grid-cols-5">
+        <TabsList className="grid grid-cols-4">
           {stickerCategories.map((category) => (
             <TabsTrigger key={category.id} value={category.id} className="px-2">
-              <category.icon className="h-4 w-4" />
+              <category.icon className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline">{category.name}</span>
             </TabsTrigger>
           ))}
         </TabsList>
@@ -430,12 +203,12 @@ export default function StickerPanel() {
         <h3 className="font-medium mb-2 px-2">{currentCategory?.name || "Stickers"}</h3>
 
         <ScrollArea className="h-[300px]">
-          <div className="grid grid-cols-6 gap-2 p-2">
+          <div className="sticker-grid">
             {filteredStickers.map((sticker, index) => (
               <Button
                 key={index}
                 variant="outline"
-                className="h-10 aspect-square flex items-center justify-center text-xl p-0 hover:bg-zinc-700"
+                className="sticker-item aspect-square"
                 onClick={() => handleStickerClick(sticker)}
               >
                 {sticker}
@@ -443,7 +216,7 @@ export default function StickerPanel() {
             ))}
 
             {filteredStickers.length === 0 && (
-              <div className="col-span-6 py-8 text-center text-zinc-400">
+              <div className="col-span-full py-8 text-center text-zinc-400">
                 <ImageIcon className="h-12 w-12 mx-auto mb-2 text-zinc-500" />
                 {searchQuery ? (
                   <p>No stickers found matching "{searchQuery}"</p>
@@ -454,14 +227,6 @@ export default function StickerPanel() {
             )}
           </div>
         </ScrollArea>
-      </div>
-
-      <div className="bg-zinc-800 rounded-lg p-4">
-        <h3 className="font-medium mb-2">Upload Custom Sticker</h3>
-        <Button variant="outline" className="w-full">
-          <Plus className="h-4 w-4 mr-2" />
-          Upload Sticker
-        </Button>
       </div>
     </div>
   )

@@ -1,6 +1,17 @@
 "use client"
 
-import { ImageIcon, Wand2, Sliders, Focus, SquareStack, Layers, Type, Palette, Sticker, Paintbrush } from "lucide-react"
+import {
+  ImageIcon,
+  Wand2,
+  Sliders,
+  Focus,
+  SquareStack,
+  Layers,
+  Type,
+  Palette,
+  StickerIcon,
+  Paintbrush,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import FilterPanel from "@/components/filter-panel"
@@ -13,14 +24,23 @@ import StockImagesPanel from "@/components/stock-images-panel"
 import StickerPanel from "@/components/sticker-panel"
 import FocusPanel from "@/components/focus-panel"
 import OverlayPanel from "@/components/overlay-panel"
-import type { Adjustments, BrushSettings, TextOverlay, Overlay, FocusEffect } from "@/context/image-editor-context"
+import FramePanel from "@/components/frame-panel"
+import type {
+  Adjustments,
+  BrushSettings,
+  TextOverlay,
+  Overlay,
+  FocusEffect,
+  Sticker,
+  Frame,
+} from "@/context/image-editor-context"
 
 interface EditorToolbarProps {
   activeTool: string
   setActiveTool: (tool: string) => void
   applyFilter: (filter: string) => void
   activeFilter: string | null
-  isDarkMode: boolean
+  isDarkMode?: boolean
   adjustments: Adjustments
   applyAdjustments: (adjustments: Adjustments) => void
   addTextOverlay: (textProps: Omit<TextOverlay, "id">) => void
@@ -36,6 +56,8 @@ interface EditorToolbarProps {
   addSticker?: (sticker: Omit<Sticker, "id">) => void
   addOverlay?: (overlay: Omit<Overlay, "id">) => void
   applyFocusEffect?: (effect: FocusEffect) => void
+  applyFrame?: (frame: Frame) => void
+  pickColorFromCanvas?: () => void
 }
 
 export default function EditorToolbar({
@@ -43,7 +65,7 @@ export default function EditorToolbar({
   setActiveTool,
   applyFilter,
   activeFilter,
-  isDarkMode,
+  isDarkMode = false,
   adjustments,
   applyAdjustments,
   addTextOverlay,
@@ -59,6 +81,8 @@ export default function EditorToolbar({
   addSticker,
   addOverlay,
   applyFocusEffect,
+  applyFrame,
+  pickColorFromCanvas,
 }: EditorToolbarProps) {
   const tools = [
     { id: "library", icon: ImageIcon, label: "Library" },
@@ -70,32 +94,39 @@ export default function EditorToolbar({
     { id: "overlays", icon: Layers, label: "Overlays" },
     { id: "text", icon: Type, label: "Text" },
     { id: "textDesign", icon: Palette, label: "Text Design" },
-    { id: "stickers", icon: Sticker, label: "Stickers" },
+    { id: "stickers", icon: StickerIcon, label: "Stickers" },
     { id: "brush", icon: Paintbrush, label: "Brush" },
   ]
 
   return (
-    <div className={cn("border-t border-zinc-800", isDarkMode ? "bg-zinc-800" : "bg-zinc-100")}>
+    <div className="border-t border-zinc-800">
       {/* Tools */}
-      <div className="flex overflow-x-auto scrollbar-hide">
+      <div className="flex overflow-x-auto scrollbar-hide toolbar-buttons p-2 gap-2">
         {tools.map((tool) => (
           <Button
             key={tool.id}
             variant="ghost"
             className={cn(
-              "flex flex-col items-center justify-center rounded-none h-20 px-4",
-              activeTool === tool.id ? "bg-zinc-700" : "hover:bg-zinc-700",
+              "tool-button flex-shrink-0 rounded-lg",
+              "bg-gradient-to-r from-[#bf953f] via-[#fcf6ba] to-[#b38728]",
+              activeTool === tool.id ? "border-2 border-black shadow-md" : "hover:opacity-90",
             )}
             onClick={() => setActiveTool(tool.id)}
+            aria-pressed={activeTool === tool.id}
           >
             <tool.icon className="h-5 w-5 mb-1" />
-            <span className="text-xs">{tool.label}</span>
+            <span className="text-xs font-medium">{tool.label}</span>
           </Button>
         ))}
       </div>
 
       {/* Active tool panel */}
-      <div className={cn("p-4", isDarkMode ? "bg-zinc-900" : "bg-white")}>
+      <div
+        className={cn(
+          "p-4 tool-panel overflow-x-hidden",
+          isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-black",
+        )}
+      >
         {activeTool === "filters" && <FilterPanel applyFilter={applyFilter} activeFilter={activeFilter} />}
 
         {activeTool === "adjust" && <AdjustPanel adjustments={adjustments} applyAdjustments={applyAdjustments} />}
@@ -104,7 +135,13 @@ export default function EditorToolbar({
 
         {activeTool === "textDesign" && <TextDesignPanel />}
 
-        {activeTool === "brush" && <BrushPanel brushSettings={brushSettings} setBrushSettings={setBrushSettings} />}
+        {activeTool === "brush" && (
+          <BrushPanel
+            brushSettings={brushSettings}
+            setBrushSettings={setBrushSettings}
+            pickColorFromCanvas={pickColorFromCanvas}
+          />
+        )}
 
         {activeTool === "transform" && (
           <TransformPanel
@@ -125,11 +162,7 @@ export default function EditorToolbar({
 
         {activeTool === "overlays" && <OverlayPanel />}
 
-        {activeTool === "frames" && (
-          <div className="text-center p-4">
-            <p className="text-sm text-zinc-400">Frame tools coming soon</p>
-          </div>
-        )}
+        {activeTool === "frames" && <FramePanel />}
       </div>
     </div>
   )

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-
+import type { Frame } from "@/context/image-editor-context"
 import { useState, useEffect, type RefObject } from "react"
 import type {
   Adjustments,
@@ -18,6 +18,7 @@ export function useImageCanvas(
   image: string | null,
   addToHistory: (imageData: string) => void,
   activeLayer: string | null,
+  setActiveLayer?: (id: string | null) => void,
 ) {
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
   const [adjustments, setAdjustments] = useState<Adjustments>({
@@ -34,6 +35,8 @@ export function useImageCanvas(
   const [brushSettings, setBrushSettings] = useState<BrushSettings>({
     color: "#ffffff",
     size: 5,
+    opacity: 100,
+    style: "round",
   })
   const [cropMode, setCropMode] = useState(false)
   const [cropSelection, setCropSelection] = useState<CropSelection>({
@@ -45,6 +48,13 @@ export function useImageCanvas(
   })
   const [stickers, setStickers] = useState<Sticker[]>([])
   const [overlays, setOverlays] = useState<Overlay[]>([])
+  const [currentFrame, setCurrentFrame] = useState<Frame | null>(null)
+  const [isPickingColor, setIsPickingColor] = useState(false)
+
+  // Add these new state variables near the top of the useImageCanvas function, with the other state variables
+  const [isDraggingText, setIsDraggingText] = useState(false)
+  const [draggedTextId, setDraggedTextId] = useState<string | null>(null)
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
 
   // Draw image on canvas when it changes
   useEffect(() => {
@@ -68,6 +78,11 @@ export function useImageCanvas(
 
           // Draw stickers
           drawStickers(ctx)
+
+          // Apply frame if any
+          if (currentFrame) {
+            applyFrame(ctx, canvas, currentFrame)
+          }
         }
         img.src = image
       }
@@ -482,6 +497,9 @@ export function useImageCanvas(
     img.src = image
   }
 
+  // Find the addTextOverlay function and replace it with this improved version
+  // that ensures the canvas is updated after adding text
+
   // Add text overlay
   const addTextOverlay = (textProps: Omit<TextOverlay, "id">) => {
     if (!canvasRef.current) return
@@ -491,33 +509,200 @@ export function useImageCanvas(
       id: `text-${Date.now()}`,
     }
 
+    console.log("Adding new text overlay:", newText)
+
+    // Update state with new text overlay
     const newTextOverlays = [...textOverlays, newText]
     setTextOverlays(newTextOverlays)
 
+    // Get canvas and context
     const canvas = canvasRef.current
     const ctx = canvas.getContext("2d")
-    if (ctx) {
-      drawTextOverlays(ctx)
-      addToHistory(canvas.toDataURL())
+
+    if (ctx && image) {
+      // Redraw the entire canvas with the new text
+      const img = new Image()
+      img.crossOrigin = "anonymous"
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        ctx.drawImage(img, 0, 0)
+
+        // Draw overlays
+        drawOverlays(ctx, canvas)
+
+        // Draw all text overlays including the new one
+        drawTextOverlays(ctx)
+
+        // Draw stickers
+        drawStickers(ctx)
+
+        // Save to history
+        addToHistory(canvas.toDataURL())
+      }
+      img.src = image
+    } else {
+      console.error("Canvas context or image not available")
     }
   }
 
+  // Add these new functions for text dragging before the drawTextOverlays function
+
+  // Check if a point is inside text bounds
+  const isPointInText = (x: number, y: number, textOverlay: TextOverlay): boolean => {
+    const canvas = canvasRef.current
+    if (!canvas) return false
+
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return false
+
+    // Set font to measure text dimensions correctly
+    ctx.font = `${textOverlay.isBold ? "bold " : ""}${textOverlay.isItalic ? "italic " : ""}${textOverlay.fontSize}px ${textOverlay.fontFamily}`
+
+    const textWidth = ctx.measureText(textOverlay.text).width
+    const textHeight = textOverlay.fontSize * 1.2 // Approximate height
+
+    // Calculate bounds based on alignment
+    let textLeft = textOverlay.x
+    if (textOverlay.alignment === "center") {
+      textLeft = textOverlay.x - textWidth / 2
+    } else if (textOverlay.alignment === "right") {
+      textLeft = textOverlay.x - textWidth
+    }
+
+    const textTop = textOverlay.y - textHeight / 2
+
+    // Check if point is inside text bounds with some padding
+    return x >= textLeft - 10 && x <= textLeft + textWidth + 10 && y >= textTop - 10 && y <= textTop + textHeight + 10
+  }
+
+  // Start dragging text
+  const startDraggingText = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (!canvasRef.current || isPickingColor) return
+
+    const canvas = canvasRef.current
+    const rect = canvas.getBoundingClientRect()
+
+    // Get coordinates based on event type
+    let clientX, clientY
+    if ("touches" in e) {
+      clientX = e.touches[0].clientX
+      clientY = e.touches[0].clientY
+    } else {
+      clientX = e.clientX
+      clientY = e.clientY
+    }
+
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+
+    const x = (clientX - rect.left) * scaleX
+    const y = (clientY - rect.top) * scaleY
+
+    // Check if we clicked on any text
+    for (let i = textOverlays.length - 1; i >= 0; i--) {
+      if (isPointInText(x, y, textOverlays[i])) {
+        setIsDraggingText(true)
+        setDraggedTextId(textOverlays[i].id)
+        setDragOffset({
+          x: x - textOverlays[i].x,
+          y: y - textOverlays[i].y,
+        })
+
+        // Set this text as active layer if setActiveLayer is provided
+        if (setActiveLayer) {
+          setActiveLayer(textOverlays[i].id)
+        }
+
+        return
+      }
+    }
+  }
+
+  // Drag text
+  const dragText = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isDraggingText || !draggedTextId || !canvasRef.current) return
+
+    const canvas = canvasRef.current
+    const rect = canvas.getBoundingClientRect()
+
+    // Get coordinates based on event type
+    let clientX, clientY
+    if ("touches" in e) {
+      clientX = e.touches[0].clientX
+      clientY = e.touches[0].clientY
+    } else {
+      clientX = e.clientX
+      clientY = e.clientY
+    }
+
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+
+    const x = (clientX - rect.left) * scaleX
+    const y = (clientY - rect.top) * scaleY
+
+    // Update text position
+    const updatedOverlays = textOverlays.map((overlay) => {
+      if (overlay.id === draggedTextId) {
+        return {
+          ...overlay,
+          x: x - dragOffset.x,
+          y: y - dragOffset.y,
+        }
+      }
+      return overlay
+    })
+
+    setTextOverlays(updatedOverlays)
+
+    // Redraw canvas
+    const ctx = canvas.getContext("2d")
+    if (ctx && image) {
+      const img = new Image()
+      img.crossOrigin = "anonymous"
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        ctx.drawImage(img, 0, 0)
+        drawTextOverlays(ctx)
+      }
+      img.src = image
+    }
+  }
+
+  // Stop dragging text
+  const stopDraggingText = () => {
+    if (isDraggingText && canvasRef.current) {
+      setIsDraggingText(false)
+      setDraggedTextId(null)
+      addToHistory(canvasRef.current.toDataURL())
+    }
+  }
+
+  // Find the drawTextOverlays function and replace it with this improved version
+  // that ensures text is properly rendered on the canvas
+
   // Draw text overlays
   const drawTextOverlays = (ctx: CanvasRenderingContext2D) => {
+    if (textOverlays.length === 0) return
+
+    console.log("Drawing text overlays:", textOverlays)
+
     textOverlays.forEach((overlay) => {
-      ctx.font = `${overlay.isBold ? "bold " : ""}${overlay.isItalic ? "italic " : ""}${overlay.fontSize}px ${overlay.fontFamily}`
+      ctx.save()
+
+      // Set font properties
+      const fontString = `${overlay.isBold ? "bold " : ""}${overlay.isItalic ? "italic " : ""}${overlay.fontSize}px ${overlay.fontFamily}`
+      ctx.font = fontString
       ctx.fillStyle = overlay.color
       ctx.textAlign = overlay.alignment
 
-      const textY = overlay.y
-
       // Draw text
-      ctx.fillText(overlay.text, overlay.x, textY)
+      ctx.fillText(overlay.text, overlay.x, overlay.y)
 
       // Draw underline if needed
       if (overlay.isUnderline) {
         const textWidth = ctx.measureText(overlay.text).width
-        const underlineY = textY + 3
+        const underlineY = overlay.y + 3
 
         ctx.beginPath()
         if (overlay.alignment === "center") {
@@ -532,14 +717,52 @@ export function useImageCanvas(
         }
 
         ctx.strokeStyle = overlay.color
+        ctx.lineWidth = 1
         ctx.stroke()
       }
+
+      ctx.restore()
     })
   }
 
+  // Pick color from canvas
+  const pickColorFromCanvas = () => {
+    setIsPickingColor(true)
+  }
+
+  // Handle color picking
+  const handleColorPick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isPickingColor || !canvasRef.current) return
+
+    const canvas = canvasRef.current
+    const rect = canvas.getBoundingClientRect()
+    const ctx = canvas.getContext("2d")
+
+    if (!ctx) return
+
+    const x = Math.floor((e.clientX - rect.left) * (canvas.width / rect.width))
+    const y = Math.floor((e.clientY - rect.top) * (canvas.height / rect.height))
+
+    const pixel = ctx.getImageData(x, y, 1, 1).data
+    const color = `#${pixel[0].toString(16).padStart(2, "0")}${pixel[1].toString(16).padStart(2, "0")}${pixel[2].toString(16).padStart(2, "0")}`
+
+    setBrushSettings({
+      ...brushSettings,
+      color,
+    })
+
+    setIsPickingColor(false)
+  }
+
   // Brush drawing functions
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current) return
+
+    // If we're in color picking mode, pick the color instead
+    if (isPickingColor) {
+      handleColorPick(e as React.MouseEvent<HTMLCanvasElement>)
+      return
+    }
 
     const canvas = canvasRef.current
     const ctx = canvas.getContext("2d")
@@ -551,16 +774,39 @@ export function useImageCanvas(
     const scaleX = canvas.width / rect.width
     const scaleY = canvas.height / rect.height
 
-    ctx.beginPath()
-    ctx.moveTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY)
+    // Get coordinates based on event type
+    let clientX, clientY
+    if ("touches" in e) {
+      clientX = e.touches[0].clientX
+      clientY = e.touches[0].clientY
+    } else {
+      clientX = e.clientX
+      clientY = e.clientY
+    }
 
+    const x = (clientX - rect.left) * scaleX
+    const y = (clientY - rect.top) * scaleY
+
+    ctx.beginPath()
+    ctx.moveTo(x, y)
+
+    // Set brush properties
     ctx.strokeStyle = brushSettings.color
     ctx.lineWidth = brushSettings.size
-    ctx.lineCap = "round"
-    ctx.lineJoin = "round"
+    ctx.lineCap = brushSettings.style === "square" ? "butt" : "round"
+    ctx.lineJoin = brushSettings.style === "square" ? "miter" : "round"
+
+    // Set opacity
+    ctx.globalAlpha = brushSettings.opacity / 100
+
+    // Special handling for calligraphy brush
+    if (brushSettings.style === "calligraphy") {
+      ctx.lineWidth = brushSettings.size / 2
+      ctx.setTransform(1, 0.5, -0.5, 1, 0, 0) // Skew transform for calligraphy effect
+    }
   }
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!isDrawing || !canvasRef.current) return
 
     const canvas = canvasRef.current
@@ -571,14 +817,41 @@ export function useImageCanvas(
     const scaleX = canvas.width / rect.width
     const scaleY = canvas.height / rect.height
 
-    ctx.lineTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY)
+    // Get coordinates based on event type
+    let clientX, clientY
+    if ("touches" in e) {
+      clientX = e.touches[0].clientX
+      clientY = e.touches[0].clientY
+    } else {
+      clientX = e.clientX
+      clientY = e.clientY
+    }
+
+    const x = (clientX - rect.left) * scaleX
+    const y = (clientY - rect.top) * scaleY
+
+    ctx.lineTo(x, y)
     ctx.stroke()
   }
 
   const stopDrawing = () => {
     if (isDrawing && canvasRef.current) {
       setIsDrawing(false)
-      addToHistory(canvasRef.current.toDataURL())
+
+      const canvas = canvasRef.current
+      const ctx = canvas.getContext("2d")
+
+      // Reset transform if we were using calligraphy
+      if (brushSettings.style === "calligraphy" && ctx) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0)
+      }
+
+      // Reset opacity
+      if (ctx) {
+        ctx.globalAlpha = 1.0
+      }
+
+      addToHistory(canvas.toDataURL())
     }
   }
 
@@ -666,6 +939,7 @@ export function useImageCanvas(
     // Resize the main canvas and draw the cropped image
     canvas.width = scaledWidth
     canvas.height = scaledHeight
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
     ctx.drawImage(tempCanvas, 0, 0)
 
     // Reset crop mode and area
@@ -991,6 +1265,112 @@ export function useImageCanvas(
     ctx.putImageData(imageData, 0, 0)
   }
 
+  const applyFrame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, frame: Frame) => {
+    if (!canvasRef.current || !image) return
+
+    setCurrentFrame(frame)
+
+    try {
+      // Create a temporary canvas for the framed image
+      const tempCanvas = document.createElement("canvas")
+      const tempCtx = tempCanvas.getContext("2d")
+      if (!tempCtx) return
+
+      // Calculate new dimensions with frame
+      const totalBorderWidth = frame.borderWidth * 2
+      const totalPadding = frame.padding * 2
+      const newWidth = canvas.width + totalBorderWidth + totalPadding
+      const newHeight = canvas.height + totalBorderWidth + totalPadding
+
+      // Set temp canvas dimensions
+      tempCanvas.width = newWidth
+      tempCanvas.height = newHeight
+
+      // Draw background/frame
+      tempCtx.fillStyle = frame.borderColor
+
+      if (frame.style === "rounded" || frame.borderRadius > 0) {
+        // Draw rounded rectangle
+        roundRect(tempCtx, 0, 0, newWidth, newHeight, frame.borderRadius, true, false)
+      } else if (frame.style === "polaroid") {
+        // Draw polaroid style frame
+        tempCtx.fillRect(0, 0, newWidth, newHeight)
+        // Add extra padding at bottom for polaroid style
+        tempCanvas.height += frame.padding * 2
+      } else {
+        // Draw regular rectangle
+        tempCtx.fillRect(0, 0, newWidth, newHeight)
+      }
+
+      // Draw the image in the center of the frame
+      const img = new Image()
+      img.crossOrigin = "anonymous"
+      img.onload = () => {
+        // Calculate position to center the image
+        const x = frame.borderWidth + frame.padding
+        const y = frame.borderWidth + frame.padding
+
+        // Draw image
+        tempCtx.drawImage(img, x, y, canvas.width, canvas.height)
+
+        // Apply shadow if needed
+        if (frame.style === "shadow" && frame.shadowIntensity > 0) {
+          tempCtx.shadowColor = "rgba(0, 0, 0, 0.5)"
+          tempCtx.shadowBlur = frame.shadowIntensity / 2
+          tempCtx.shadowOffsetX = frame.shadowIntensity / 10
+          tempCtx.shadowOffsetY = frame.shadowIntensity / 5
+        }
+
+        // Update the main canvas
+        canvas.width = tempCanvas.width
+        canvas.height = tempCanvas.height
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        ctx.drawImage(tempCanvas, 0, 0)
+
+        // Save to history
+        addToHistory(canvas.toDataURL())
+      }
+      img.src = image
+    } catch (error) {
+      console.error("Error applying frame:", error)
+    }
+  }
+
+  // Helper function for rounded rectangles
+  const roundRect = (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radius: number,
+    fill: boolean,
+    stroke: boolean,
+  ) => {
+    ctx.beginPath()
+    ctx.moveTo(x + radius, y)
+    ctx.lineTo(x + width - radius, y)
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius)
+    ctx.lineTo(x + width, y + height - radius)
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height)
+    ctx.lineTo(x + radius, y + height)
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius)
+    ctx.lineTo(x, y + radius)
+    ctx.quadraticCurveTo(x, y, x + radius, y)
+    ctx.closePath()
+    if (fill) {
+      ctx.fill()
+    }
+    if (stroke) {
+      ctx.stroke()
+    }
+  }
+
+  // Function to add a new layer (placeholder for actual implementation)
+  const addLayer = (layer: any) => {
+    console.log("Layer added:", layer)
+  }
+
   return {
     applyFilter,
     applyAdjustments,
@@ -1026,5 +1406,14 @@ export function useImageCanvas(
     removeOverlay,
     updateOverlay,
     applyFocusEffect,
+    applyFrame,
+    currentFrame,
+    startDraggingText,
+    dragText,
+    stopDraggingText,
+    isDraggingText,
+    pickColorFromCanvas,
+    isPickingColor,
+    handleColorPick,
   }
 }

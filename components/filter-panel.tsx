@@ -28,18 +28,18 @@ export default function FilterPanel({ applyFilter, activeFilter }: FilterPanelPr
   const previewImageSrc = "/colorful-abstract-portrait.png"
 
   return (
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
       {filters.map((filter) => (
         <Button
           key={filter.id}
           variant="outline"
           className={cn(
-            "flex flex-col items-center justify-center h-24 p-1",
+            "flex flex-col items-center justify-center p-1 aspect-square w-full h-24 rounded-lg overflow-hidden",
             activeFilter === filter.id && "border-orange-500 bg-orange-500/10",
           )}
           onClick={() => applyFilter(filter.id)}
         >
-          <div className="w-full h-16 rounded overflow-hidden mb-1">
+          <div className="w-full aspect-square rounded overflow-hidden mb-1">
             {filter.id === "original" ? (
               <img src={previewImageSrc || "/placeholder.svg"} alt="Original" className="w-full h-full object-cover" />
             ) : (

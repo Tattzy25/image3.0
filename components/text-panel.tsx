@@ -8,6 +8,7 @@ import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight } from "luc
 import { HexColorPicker } from "react-colorful"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import type { TextOverlay } from "@/context/image-editor-context"
+import { useToast } from "@/hooks/use-toast"
 
 interface TextPanelProps {
   addTextOverlay: (textProps: Omit<TextOverlay, "id">) => void
@@ -22,14 +23,32 @@ export default function TextPanel({ addTextOverlay }: TextPanelProps) {
   const [isItalic, setIsItalic] = useState(false)
   const [isUnderline, setIsUnderline] = useState(false)
   const [alignment, setAlignment] = useState<"left" | "center" | "right">("center")
+  const { toast } = useToast()
 
   const handleAddText = () => {
-    if (!text.trim()) return
+    if (!text.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter some text first",
+      })
+      return
+    }
 
+    // Get canvas dimensions to position text in the center
+    const canvas = document.querySelector("canvas")
+    let centerX = 200
+    let centerY = 200
+
+    if (canvas) {
+      centerX = canvas.width / 2
+      centerY = canvas.height / 2
+    }
+
+    // Add text at the center of the canvas
     addTextOverlay({
       text,
-      x: 200, // Default position - center of canvas
-      y: 200, // Default position
+      x: centerX,
+      y: centerY,
       fontSize,
       fontFamily,
       color: textColor,
@@ -37,6 +56,12 @@ export default function TextPanel({ addTextOverlay }: TextPanelProps) {
       isItalic,
       isUnderline,
       alignment,
+    })
+
+    // Show a visual confirmation
+    toast({
+      title: "Text added",
+      description: "Text has been added to your image",
     })
 
     // Reset the form
@@ -133,12 +158,24 @@ export default function TextPanel({ addTextOverlay }: TextPanelProps) {
             <HexColorPicker color={textColor} onChange={setTextColor} />
           </PopoverContent>
         </Popover>
-        <div className="text-xs text-zinc-400">{textColor}</div>
+        <div className="text-xs" style={{ color: textColor }}>
+          {textColor}
+        </div>
       </div>
 
       <Button className="w-full" onClick={handleAddText}>
-        Add Text
+        Add Text to Image
       </Button>
+
+      {/* Add helpful instructions about dragging */}
+      <div className="bg-amber-100 border border-amber-300 rounded-md p-3 text-amber-800 text-sm">
+        <p className="font-medium mb-1">💡 Tip: Text Interaction</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Click and drag to move text around the canvas</li>
+          <li>Click on text to select it for editing</li>
+          <li>Use the Text Design panel for more advanced styling</li>
+        </ul>
+      </div>
     </div>
   )
 }
