@@ -34,6 +34,20 @@ import type {
   Sticker,
   Frame,
 } from "@/context/image-editor-context"
+import ReplicatePanel from "@/components/replicate-panel"
+
+// Helper function to convert data URL to File
+const dataURLtoFile = (dataurl: string, filename: string): File => {
+  const arr = dataurl.split(",")
+  const mime = arr[0].match(/:(.*?);/)?.[1] || "image/png"
+  const bstr = atob(arr[1])
+  let n = bstr.length
+  const u8arr = new Uint8Array(n)
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n)
+  }
+  return new File([u8arr], filename, { type: mime })
+}
 
 interface EditorToolbarProps {
   activeTool: string
@@ -86,6 +100,12 @@ export default function EditorToolbar({
 }: EditorToolbarProps) {
   const tools = [
     { id: "library", icon: ImageIcon, label: "Library" },
+    {
+      id: "replicate",
+      name: "Replicate AI",
+      icon: Wand2,
+      description: "Generate, upscale or remove backgrounds with AI",
+    },
     { id: "transform", icon: Wand2, label: "Transform" },
     { id: "filters", icon: Sliders, label: "Filters" },
     { id: "adjust", icon: Sliders, label: "Adjust" },
@@ -97,6 +117,56 @@ export default function EditorToolbar({
     { id: "stickers", icon: StickerIcon, label: "Stickers" },
     { id: "brush", icon: Paintbrush, label: "Brush" },
   ]
+
+  const renderToolPanel = () => {
+    switch (activeTool) {
+      case "filters":
+        return <FilterPanel applyFilter={applyFilter} activeFilter={activeFilter} />
+      case "adjust":
+        return <AdjustPanel adjustments={adjustments} applyAdjustments={applyAdjustments} />
+      case "text":
+        return <TextPanel addTextOverlay={addTextOverlay} />
+      case "textDesign":
+        return <TextDesignPanel />
+      case "brush":
+        return (
+          <BrushPanel
+            brushSettings={brushSettings}
+            setBrushSettings={setBrushSettings}
+            pickColorFromCanvas={pickColorFromCanvas}
+          />
+        )
+      case "transform":
+        return (
+          <TransformPanel
+            setCropMode={setCropMode}
+            applyCrop={applyCrop}
+            rotateImage={rotateImage}
+            flipImage={flipImage}
+            isGeneratingImage={isGeneratingImage}
+            setIsGeneratingImage={setIsGeneratingImage}
+          />
+        )
+      case "library":
+        return <StockImagesPanel />
+      case "replicate":
+        return (
+          <ReplicatePanel
+            onImageGenerated={(imageUrl) => loadImageFile(dataURLtoFile(imageUrl, "replicate-image.png"))}
+          />
+        )
+      case "stickers":
+        return <StickerPanel />
+      case "focus":
+        return <FocusPanel />
+      case "overlays":
+        return <OverlayPanel />
+      case "frames":
+        return <FramePanel />
+      default:
+        return null
+    }
+  }
 
   return (
     <div className="border-t border-zinc-800">
@@ -127,42 +197,7 @@ export default function EditorToolbar({
           isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-black",
         )}
       >
-        {activeTool === "filters" && <FilterPanel applyFilter={applyFilter} activeFilter={activeFilter} />}
-
-        {activeTool === "adjust" && <AdjustPanel adjustments={adjustments} applyAdjustments={applyAdjustments} />}
-
-        {activeTool === "text" && <TextPanel addTextOverlay={addTextOverlay} />}
-
-        {activeTool === "textDesign" && <TextDesignPanel />}
-
-        {activeTool === "brush" && (
-          <BrushPanel
-            brushSettings={brushSettings}
-            setBrushSettings={setBrushSettings}
-            pickColorFromCanvas={pickColorFromCanvas}
-          />
-        )}
-
-        {activeTool === "transform" && (
-          <TransformPanel
-            setCropMode={setCropMode}
-            applyCrop={applyCrop}
-            rotateImage={rotateImage}
-            flipImage={flipImage}
-            isGeneratingImage={isGeneratingImage}
-            setIsGeneratingImage={setIsGeneratingImage}
-          />
-        )}
-
-        {activeTool === "library" && <StockImagesPanel />}
-
-        {activeTool === "stickers" && <StickerPanel />}
-
-        {activeTool === "focus" && <FocusPanel />}
-
-        {activeTool === "overlays" && <OverlayPanel />}
-
-        {activeTool === "frames" && <FramePanel />}
+        {renderToolPanel()}
       </div>
     </div>
   )
